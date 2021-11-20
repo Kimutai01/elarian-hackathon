@@ -1,6 +1,38 @@
 require('dotenv').config(); // load configs from .env
+const firebase = require("firebase/app");
+
+const firebaseConfig = {
+    apiKey: "AIzaSyAGSoMwtlv7Jh8H-GwCKqfZOdnul-7SuXQ",
+
+    authDomain: "money-disbursion.firebaseapp.com",
+  
+    projectId: "money-disbursion",
+  
+    storageBucket: "money-disbursion.appspot.com",
+  
+    messagingSenderId: "194461712693",
+  
+    appId: "1:194461712693:web:c72ca3d859a14f4fe5cc7c"
+  
+};
+firebase.initializeApp(firebaseConfig);
+require('firebase/firestore')
+require('firebase/auth')
+const db = firebase.firestore()
+
+// const addData = () => {
+//     db.collection("users").add({
+//         amount: 120000
+//     }).then(() => {
+//         console.log("Information added successfully");
+//     })
+// }
+
+// addData()
 
 const log = require('signale');
+
+
 
 const { Elarian } = require('elarian');
 
@@ -21,15 +53,15 @@ const purseId = process.env.PURSE_ID;
 const makeOrder = async (customer) => {
     log.info(`Processing order from ${customer.customerNumber.number}`);
     const {
-        name,
-        balance,
+        email,
+        Password,
         daily
     } = await customer.getMetadata();
-    const salesPerson = new client.Customer({
+    const kim = new client.Customer({
         provider: 'cellular',
         number: '+254790841979'
     })
-    await salesPerson.sendMessage(
+    await kim.sendMessage(
         smsChannel, {
             body: {
                 text: `Hello ${name} have saved ${balance} and you'll recieve ${daily} amount `,
@@ -52,8 +84,8 @@ const processUssd = async (notification, customer, appData, callback) => {
 
         const customerData = await customer.getMetadata();
         let {
-            username,
-            name,
+            email,
+            password,
             balance,
             daily
         } = customerData;
@@ -64,9 +96,9 @@ const processUssd = async (notification, customer, appData, callback) => {
         let nextScreen = screen;
         console.log(nextScreen)
         if (screen === 'home' && input !== '') {
-            if (input =='1') {
+            if (input === '1') {
                 nextScreen = 'request-name';
-            } else if (input == '2') {
+            } else if (input === '2') {
                 nextScreen = 'quit';
             }
         }
@@ -80,30 +112,22 @@ const processUssd = async (notification, customer, appData, callback) => {
             });
             break;
         case 'request-name':
-            menu.text = 'Alright, what is your name?';
-            nextScreen = 'request-list';
-            callback(menu, {
-                screen: nextScreen,
-            });
-            break;
-        case 'request-list':
-            name = input;
-            menu.text = `Okay ${name}, what is your username`
+            menu.text = `Okay , what is your email`
             nextScreen = 'request-password';
             callback(menu, {
                 screen: nextScreen,
             });
             break;
         case 'request-password':
-            username = input;
-            menu.text = `Okay ${username} enter your password :`;
+            email = input;
+            menu.text = `Please enter your password :`;
             nextScreen = 'total-deposit';
             callback(menu, {
                 screen: nextScreen,
             });
             break;
         case 'total-deposit':
-            username = username;
+            password=input
             menu.text = `Okay ${username} what amount do you want to save:`;
             nextScreen = 'daily-amount';
             callback(menu, {
@@ -155,15 +179,20 @@ const processUssd = async (notification, customer, appData, callback) => {
         }
         await customer.updateMetadata({
             username,
-            name,
+            email,
             balance,
             daily
             
         });
+        console.log(username)
+        console.log(email)
+        console.log(balance)
+        console.log(daily)
     } catch (error) {
         log.error('USSD Error: ', error);
     }
 };
+
 
 const start = () => {
     client = new Elarian({
